@@ -1,0 +1,56 @@
+# Build and publish a GitHub Release when a tag is pushed.
+name: release
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: setup jdk
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: build
+        run: ./gradlew build
+
+      - name: locate remapped mod jar
+        id: jar
+        shell: bash
+        run: |
+          shopt -s nullglob
+          artifacts=()
+          for file in build/libs/*.jar; do
+            [[ "$file" == *-sources.jar ]] && continue
+            artifacts+=("$file")
+          done
+          if [[ ${#artifacts[@]} -eq 0 ]]; then
+            echo "No mod jar found in build/libs" >&2
+            exit 1
+          fi
+          echo "path=${artifacts[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: ${{ steps.jar.outputs.path }}

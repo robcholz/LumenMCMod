@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "lumen",
+  "version": "${version}",
+  "name": "Lumen",
+  "description": "Support client for Project Lumen",
+  "authors": [
+    "robcholz"
+  ],
+  "contact": {
+    "homepage": "https://github.com/robcholz/LumenMCMod",
+    "issues": "https://github.com/robcholz/LumenMCMod/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/lumen/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.robcholz.lumen.client.LumenClient"
+    ],
+    "modmenu": [
+      "com.robcholz.lumen.client.LumenModMenuIntegration"
+    ]
+  },
+  "mixins": [],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
