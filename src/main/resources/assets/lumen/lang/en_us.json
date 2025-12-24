@@ -1,0 +1,14 @@
+{
+  "lumen.title": "Lumen",
+  "lumen.config.serial_settings": "Lumen Serial Settings",
+  "lumen.config.leave_port_blank": "Leave port blank to auto-detect",
+  "lumen.config.port_path": "Port path",
+  "lumen.config.refresh_ports": "Refresh ports",
+  "lumen.config.auto_reconnect": "Auto-reconnect: %s",
+  "lumen.config.reconnect_period": "Reconnect period (sec)",
+  "lumen.config.select_port": "Select port: %s",
+  "lumen.config.auto_detect": "Auto-detect",
+  "lumen.config.no_ports_found": "No ports found",
+  "lumen.config.on": "On",
+  "lumen.config.off": "Off"
+}

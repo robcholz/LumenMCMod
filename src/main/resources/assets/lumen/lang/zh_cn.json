@@ -1,0 +1,14 @@
+{
+  "lumen.title": "Lumen",
+  "lumen.config.serial_settings": "Lumen 串口设置",
+  "lumen.config.leave_port_blank": "留空端口以自动检测",
+  "lumen.config.port_path": "端口路径",
+  "lumen.config.refresh_ports": "刷新端口",
+  "lumen.config.auto_reconnect": "自动重连：%s",
+  "lumen.config.reconnect_period": "重连周期（秒）",
+  "lumen.config.select_port": "选择端口：%s",
+  "lumen.config.auto_detect": "自动检测",
+  "lumen.config.no_ports_found": "未找到端口",
+  "lumen.config.on": "开",
+  "lumen.config.off": "关"
+}

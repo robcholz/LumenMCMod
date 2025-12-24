@@ -28,7 +28,7 @@ public class LumenConfigScreen extends Screen {
     private int scrollOffset;
 
     public LumenConfigScreen(Screen parent) {
-        super(Text.literal("Lumen"));
+        super(Text.translatable("lumen.title"));
         this.parent = parent;
         this.workingConfig = LumenConfigManager.get().copy();
     }
@@ -38,7 +38,7 @@ public class LumenConfigScreen extends Screen {
         int centerX = width / 2;
         int y = height / 4;
 
-        portField = new TextFieldWidget(textRenderer, centerX - 100, y, 200, 20, Text.literal("Port path"));
+        portField = new TextFieldWidget(textRenderer, centerX - 100, y, 200, 20, Text.translatable("lumen.config.port_path"));
         portField.setMaxLength(256);
         portField.setText(workingConfig.portPath);
         addSelectableChild(portField);
@@ -57,7 +57,7 @@ public class LumenConfigScreen extends Screen {
         portListWidth = 200;
 
         y += 24;
-        refreshPortsButton = ButtonWidget.builder(Text.literal("Refresh ports"), button -> {
+        refreshPortsButton = ButtonWidget.builder(Text.translatable("lumen.config.refresh_ports"), button -> {
             refreshPortOptions();
             scrollOffset = 0;
         }).dimensions(centerX - 100, y, 200, 20).build();
@@ -72,16 +72,16 @@ public class LumenConfigScreen extends Screen {
         addDrawableChild(autoReconnectButton);
 
         y += 26;
-        reconnectField = new TextFieldWidget(textRenderer, centerX - 100, y, 200, 20, Text.literal("Reconnect period (sec)"));
+        reconnectField = new TextFieldWidget(textRenderer, centerX - 100, y, 200, 20, Text.translatable("lumen.config.reconnect_period"));
         reconnectField.setMaxLength(4);
         reconnectField.setText(Integer.toString(workingConfig.reconnectPeriodSeconds));
         addSelectableChild(reconnectField);
 
         int buttonY = height - 50;
-        addDrawableChild(ButtonWidget.builder(Text.literal("Done"), button -> saveAndClose())
+        addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> saveAndClose())
                 .dimensions(centerX - 100, buttonY, 95, 20)
                 .build());
-        addDrawableChild(ButtonWidget.builder(Text.literal("Cancel"), button -> close())
+        addDrawableChild(ButtonWidget.builder(Text.translatable("gui.cancel"), button -> close())
                 .dimensions(centerX + 5, buttonY, 95, 20)
                 .build());
 
@@ -117,8 +117,8 @@ public class LumenConfigScreen extends Screen {
     @Override
     public void render(net.minecraft.client.gui.DrawContext context, int mouseX, int mouseY, float delta) {
         renderBackground(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("Lumen Serial Settings"), width / 2, 20, 0xFFFFFF);
-        context.drawTextWithShadow(textRenderer, Text.literal("Leave port blank to auto-detect"), width / 2 - 100, height / 4 - 12, 0xAAAAAA);
+        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("lumen.config.serial_settings"), width / 2, 20, 0xFFFFFF);
+        context.drawTextWithShadow(textRenderer, Text.translatable("lumen.config.leave_port_blank"), width / 2 - 100, height / 4 - 12, 0xAAAAAA);
         super.render(context, mouseX, mouseY, delta);
         if (showPortList) {
             context.getMatrices().push();
@@ -139,15 +139,18 @@ public class LumenConfigScreen extends Screen {
     }
 
     private Text autoReconnectLabel() {
-        return Text.literal("Auto-reconnect: " + (autoReconnectEnabled ? "On" : "Off"));
+        Text state = autoReconnectEnabled
+                ? Text.translatable("lumen.config.on")
+                : Text.translatable("lumen.config.off");
+        return Text.translatable("lumen.config.auto_reconnect", state);
     }
 
     private Text portSelectLabel() {
         String value = portField.getText().trim();
-        if (value.isEmpty()) {
-            value = "Auto-detect";
-        }
-        return Text.literal("Select port: " + value);
+        Text display = value.isEmpty()
+                ? Text.translatable("lumen.config.auto_detect")
+                : Text.literal(value);
+        return Text.translatable("lumen.config.select_port", display);
     }
 
     private void refreshPortOptions() {
@@ -169,7 +172,7 @@ public class LumenConfigScreen extends Screen {
         int startIndex = clampScrollOffset(visibleEntries, listSize);
         int endIndex = Math.min(listSize, startIndex + visibleEntries);
         for (int index = startIndex; index < endIndex; index++) {
-            String label = portLabelForIndex(index);
+            Text label = portLabelForIndex(index);
             drawPortEntry(context, mouseX, mouseY, index - startIndex, label);
         }
 
@@ -178,7 +181,7 @@ public class LumenConfigScreen extends Screen {
         }
     }
 
-    private void drawPortEntry(net.minecraft.client.gui.DrawContext context, int mouseX, int mouseY, int index, String label) {
+    private void drawPortEntry(net.minecraft.client.gui.DrawContext context, int mouseX, int mouseY, int index, Text label) {
         int x = portListX + LIST_PADDING;
         int y = portListY + LIST_PADDING + index * ENTRY_HEIGHT;
         int width = portListWidth - LIST_PADDING * 2;
@@ -187,7 +190,7 @@ public class LumenConfigScreen extends Screen {
         if (hover) {
             context.fill(x, y, x + width, y + height, 0xFF3A3A3A);
         }
-        context.drawTextWithShadow(textRenderer, Text.literal(label), x + 4, y + 6, 0xFFFFFF);
+        context.drawTextWithShadow(textRenderer, label, x + 4, y + 6, 0xFFFFFF);
     }
 
     @Override
@@ -265,18 +268,18 @@ public class LumenConfigScreen extends Screen {
         return scrollOffset;
     }
 
-    private String portLabelForIndex(int index) {
+    private Text portLabelForIndex(int index) {
         if (index == 0) {
-            return "Auto-detect";
+            return Text.translatable("lumen.config.auto_detect");
         }
         if (portOptions.isEmpty()) {
-            return "No ports found";
+            return Text.translatable("lumen.config.no_ports_found");
         }
         int portIndex = index - 1;
         if (portIndex >= 0 && portIndex < portOptions.size()) {
-            return portOptions.get(portIndex);
+            return Text.literal(portOptions.get(portIndex));
         }
-        return "";
+        return Text.empty();
     }
 
     private void drawScrollBar(net.minecraft.client.gui.DrawContext context, int x, int y, int height, int startIndex, int listSize, int visibleEntries) {
