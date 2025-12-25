@@ -1,5 +1,8 @@
 package com.robcholz.lumen.client;
 
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.robcholz.lumen.LumenSyncState;
 import com.robcholz.lumen.client.config.LumenConfig;
 import com.robcholz.lumen.client.config.LumenConfigManager;
@@ -25,9 +28,13 @@ public class LumenClient implements ClientModInitializer {
     private static void sendPlayerInfo(LumenSerialManager serial) {
         try {
             LumenSyncState.Snapshot snapshot = LumenSyncState.requestPlayerSnapshot();
-            String json = "{\"mode\":\"" + snapshot.mode() + "\",\"health\":" +
-                    snapshot.health() + ",\"max_health\":" + snapshot.maxHealth() + "}";
-            serial.send("sync", json.getBytes(StandardCharsets.UTF_8));
+            Gson gson = new GsonBuilder()
+                    .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                    .create();
+            serial.send(
+                    "sync",
+                    gson.toJson(snapshot).getBytes(StandardCharsets.UTF_8)
+            );
         } catch (Exception e) {
             LOGGER.debug("Failed to send player info over serial", e);
         }

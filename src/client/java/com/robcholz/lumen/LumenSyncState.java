@@ -4,6 +4,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
+import net.minecraft.client.texture.PlayerSkinTexture;
 import net.minecraft.client.texture.ResourceTexture;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.entity.player.PlayerEntity;
@@ -12,6 +13,10 @@ import net.minecraft.world.GameMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -60,9 +65,10 @@ public final class LumenSyncState {
 
         PlayerEntity player = client.player;
         String mode = resolveMode(client);
+        String name = player.getName().getString();
         double health = player.getHealth();
         double maxHealth = player.getMaxHealth();
-        return new Snapshot(mode, health, maxHealth);
+        return new Snapshot(mode, name, health, maxHealth);
     }
 
     private static SkinPayload captureSkinPayload(MinecraftClient client) {
@@ -133,17 +139,27 @@ public final class LumenSyncState {
             return SkinPayload.empty();
         }
         AbstractTexture texture = client.getTextureManager().getTexture(textures.texture());
-        if (texture instanceof ResourceTexture resourceTexture) {
-            Optional<NativeImage> image = encodeResourceTexture(client, resourceTexture);
+        Optional<NativeImage> image = Optional.empty();
+
+        if (texture instanceof PlayerSkinTexture playerSkinTexture) {
+            image = encodePlayerSkinTexture(client, playerSkinTexture);
             if (image.isEmpty()) {
                 return SkinPayload.empty();
             }
-            NativeImage frontView = image.get();
-            NativeImage scaled = scaleImage(frontView);
-            byte[] bytes = toRGB565(scaled);
-            return new SkinPayload(scaled.getWidth(), scaled.getHeight(), bytes);
+        } else if (texture instanceof ResourceTexture resourceTexture) {
+            image = encodeResourceTexture(client, resourceTexture);
+            if (image.isEmpty()) {
+                return SkinPayload.empty();
+            }
         }
-        return SkinPayload.empty();
+
+        if (image.isEmpty()) {
+            return SkinPayload.empty();
+        }
+        NativeImage frontView = image.get();
+        NativeImage scaled = scaleImage(frontView);
+        byte[] bytes = toRGB565(scaled);
+        return new SkinPayload(scaled.getWidth(), scaled.getHeight(), bytes);
     }
 
     private static Optional<NativeImage> encodeFrontView(NativeImage skin) {
@@ -181,6 +197,40 @@ public final class LumenSyncState {
                     LOGGER.debug("Failed to close resource texture data", e);
                 }
             }
+        }
+    }
+
+    private static Field findFieldByType(Class<?> type, Class<?> fieldType) {
+        for (Field field : type.getDeclaredFields()) {
+            if (field.getType() == fieldType) {
+                return field;
+            }
+        }
+        return null;
+    }
+
+
+    private static Optional<NativeImage> encodePlayerSkinTexture(MinecraftClient client, PlayerSkinTexture texture) {
+        File cacheFile = null;
+        try {
+            var field = findFieldByType(PlayerSkinTexture.class, File.class);
+            assert field != null;
+            field.setAccessible(true);
+            cacheFile = (File) field.get(texture);
+        } catch (ReflectiveOperationException e) {
+            LOGGER.info("Failed to access player skin cache file", e);
+        }
+
+        if (cacheFile == null) {
+            return encodeResourceTexture(client, texture);
+        }
+
+        try (InputStream input = new FileInputStream(cacheFile)) {
+            NativeImage image = NativeImage.read(input);
+            return encodeFrontView(image);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to read player skin cache file {}", cacheFile, e);
+            return Optional.empty();
         }
     }
 
@@ -268,11 +318,12 @@ public final class LumenSyncState {
 
     public record Snapshot(
             String mode,
+            String name,
             double health,
             double maxHealth
     ) {
         public static Snapshot defaultSnapshot() {
-            return new Snapshot("-----", 0.0, 0.0);
+            return new Snapshot("-----", "-----", 0.0, 0.0);
         }
     }
 
